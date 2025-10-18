@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR WhatsApp - Lovable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'lovable-pink': '#F472B6', // rosa
+                        'lovable-purple': '#A78BFA', // morado
+                        'lovable-deep-purple': '#6D28D9', // morado oscuro
+                        'lovable-light': '#F5D0FE', // rosa claro
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-lovable-pink via-lovable-purple to-indigo-400 p-4 flex items-center justify-center">
+    <div class="w-full max-w-md mx-auto">
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-lovable-deep-purple to-purple-800 p-6 text-center">
+                <div class="flex items-center justify-center mb-2">
+                     <svg class="w-10 h-10 mr-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                    </svg>
+                    <h1 class="text-3xl font-bold text-white tracking-wider">LOVABLE</h1>
+                </div>
+                <p class="text-pink-200 text-sm">Conexiones Mágicas - WhatsApp QR</p>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" id="statusDot"></span>
+                        Tu Llave Mágica ✨
+                    </label>
+                    <input 
+                        type="password" 
+                        id="bearerToken" 
+                        placeholder="Pega tu llave mágica aquí..."
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-lovable-pink focus:border-transparent transition-all outline-none"
+                    />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button 
+                        onclick="fetchQRCode()"
+                        class="bg-gradient-to-r from-lovable-pink to-lovable-purple text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v11.494m-5.747-8.598l11.494 5.747M6.253 18l11.494-5.747" />
+                        </svg>
+                        Generar Magia
+                    </button>
+                    <button 
+                        onclick="checkStatus()"
+                        class="bg-indigo-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-600 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        Verificar
+                    </button>
+                </div>
+
+                <div id="loading" class="hidden">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-12 w-12 border-4 border-lovable-pink border-t-transparent"></div>
+                    </div>
+                </div>
+
+                <div id="alertContainer"></div>
+
+                <div id="qrContainer" class="hidden">
+                    <div class="bg-gray-50 rounded-xl p-6 text-center">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Tu Portal Mágico</h3>
+                        <div id="qrCode" class="flex justify-center mb-4"></div>
+                        <p class="text-xs text-gray-500 mb-4">Escanea para conectar con amor 💕</p>
+                        <button 
+                            onclick="copyQRCode()"
+                            class="w-full bg-teal-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-teal-600 transition-colors flex items-center justify-center"
+                        >
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                            </svg>
+                            Copiar Hechizo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button 
+                        onclick="forceReconnect()"
+                        class="bg-lovable-purple text-white font-medium py-2 px-4 rounded-lg hover:bg-purple-500 transition-colors flex items-center justify-center text-sm"
+                    >
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Reintentar
+                    </button>
+                    <button 
+                        onclick="clearAll()"
+                        class="bg-pink-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-pink-600 transition-colors flex items-center justify-center text-sm"
+                    >
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Borrar Todo
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-100 px-6 py-3 text-center">
+                <p class="text-xs text-gray-500">
+                    <span id="lastUpdate">Sistema Mágico Activo</span> • 
+                    <span class="font-semibold text-lovable-deep-purple">Lovable</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://whatsapp-api-production-7504.up.railway.app';
+        let qrCodeData = '';
+        let qrInstance = null;
+
+        // Cargar token guardado
+        window.addEventListener('load', () => {
+            const savedToken = localStorage.getItem('bearerToken');
+            if (savedToken) {
+                document.getElementById('bearerToken').value = savedToken;
+                updateStatus('connected');
+            }
+        });
+
+        function updateStatus(status) {
+            const dot = document.getElementById('statusDot');
+            dot.className = 'inline-block w-2 h-2 rounded-full mr-2 animate-pulse';
+            
+            switch(status) {
+                case 'connected':
+                    dot.classList.add('bg-green-500');
+                    break;
+                case 'waiting':
+                    dot.classList.add('bg-yellow-500');
+                    break;
+                default:
+                    dot.classList.add('bg-red-500');
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const colors = {
+                success: 'bg-green-100 text-green-800 border-green-300',
+                error: 'bg-red-100 text-red-800 border-red-300',
+                info: 'bg-blue-100 text-blue-800 border-blue-300',
+                warning: 'bg-yellow-100 text-yellow-800 border-yellow-300'
+            };
+            
+            container.innerHTML = `
+                <div class="${colors[type]} border rounded-lg px-4 py-3 text-sm animate-fade-in">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+        }
+
+        async function makeRequest(endpoint, method = 'GET') {
+            const token = document.getElementById('bearerToken').value.trim();
+            
+            if (!token) {
+                throw new Error('¡Oh no! Necesitas tu llave mágica para continuar.');
+            }
+
+            localStorage.setItem('bearerToken', token);
+
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`¡Uy! Algo mágico falló (Error ${response.status})`);
+            }
+
+            return response;
+        }
+
+        async function fetchQRCode() {
+            showLoading(true);
+            document.getElementById('qrContainer').classList.add('hidden');
+            
+            try {
+                const response = await makeRequest('/qr');
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('json')) {
+                    const data = await response.json();
+                    showAlert(data.message, 'info');
+                    updateStatus('connected');
+                } else {
+                    const data = await response.text();
+                    qrCodeData = data;
+                    displayQRCode(data);
+                    showAlert('¡Hechizo completado! Tu portal mágico está listo.', 'success');
+                    updateStatus('waiting');
+                }
+                
+                updateLastTime();
+            } catch (error) {
+                showAlert(error.message, 'error');
+                updateStatus('disconnected');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await makeRequest('/estado');
+                const data = await response.json();
+                
+                const status = data.isAuthenticated ? 'Conectado con amor ❤️' : 
+                               data.hasQR ? 'Creando portal...' : 'Sin conexión 💔';
+                
+                showAlert(`Estado mágico: ${status}`, 'info');
+                updateStatus(data.isAuthenticated ? 'connected' : 'waiting');
+                
+                if (data.hasQR && !data.isAuthenticated) {
+                    fetchQRCode();
+                }
+            } catch (error) {
+                showAlert('No pudimos verificar la conexión mágica.', 'error');
+            }
+        }
+
+        async function forceReconnect() {
+            if (!confirm('¿Quieres intentar la magia de nuevo y crear un nuevo portal?')) return;
+            
+            showLoading(true);
+            try {
+                await makeRequest('/reconectar', 'POST');
+                showAlert('Reconectando con el universo...', 'warning');
+                setTimeout(fetchQRCode, 3000);
+            } catch (error) {
+                showAlert('El hechizo de reconexión falló.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayQRCode(qrString) {
+            const container = document.getElementById('qrContainer');
+            const qrDiv = document.getElementById('qrCode');
+            
+            qrDiv.innerHTML = '';
+            
+            if (qrInstance) {
+                qrInstance = null;
+            }
+            
+            const qrElement = document.createElement('div');
+            qrDiv.appendChild(qrElement);
+            
+            qrInstance = new QRCode(qrElement, {
+                text: qrString,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            container.classList.remove('hidden');
+        }
+
+        function copyQRCode() {
+            if (qrCodeData) {
+                navigator.clipboard.writeText(qrCodeData).then(() => {
+                    showAlert('¡Hechizo copiado a tu portapapeles!', 'success');
+                }).catch(() => {
+                    showAlert('No se pudo copiar el hechizo.', 'error');
+                });
+            }
+        }
+
+        function clearAll() {
+            if (!confirm('¿Estás seguro de que quieres borrar toda la magia?')) return;
+            
+            document.getElementById('bearerToken').value = '';
+            document.getElementById('qrContainer').classList.add('hidden');
+            document.getElementById('alertContainer').innerHTML = '';
+            localStorage.removeItem('bearerToken');
+            updateStatus('disconnected');
+            qrCodeData = '';
+        }
+
+        function updateLastTime() {
+            const now = new Date().toLocaleTimeString('es-ES', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            document.getElementById('lastUpdate').textContent = `Última magia a las ${now}`;
+        }
+
+        // Enter para enviar
+        document.getElementById('bearerToken').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fetchQRCode();
+        });
+
+        // Auto-check cada 60 segundos
+        setInterval(() => {
+            if (localStorage.getItem('bearerToken')) {
+                checkStatus();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
